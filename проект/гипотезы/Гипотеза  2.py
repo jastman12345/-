@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[33]:
+# In[2]:
 
 
 #Импорт библиотек
@@ -19,9 +19,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, median_absolute_error, r2_score
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import ElasticNet
+from statsmodels.stats.diagnostic import het_white
+import statsmodels.api as sm
 
 
-# In[2]:
+# In[3]:
 
 
 #Импорт БД
@@ -30,7 +32,7 @@ Base = pd.read_csv('C:/Users/Dima/Desktop/АНДАН - workable data (1).csv', d
                         'кол-во комнат', 'тип дома', 'этажность', 'этаж', 'срок сдачи'])
 
 
-# In[96]:
+# In[4]:
 
 
 # Функция очистки от выбросов
@@ -44,7 +46,7 @@ def hampel(vals_orig):
     return(vals)
 
 
-# In[97]:
+# In[5]:
 
 
 # Необходимые переменные
@@ -56,7 +58,7 @@ StageH = hampel(Base['этажность'])
 StageF = hampel(Base['этаж'])
 
 
-# In[5]:
+# In[6]:
 
 
 #Гипотеза 2:
@@ -73,7 +75,7 @@ KT = sp.kendalltau(Sqm, PbSm)
 SP = sp.spearmanr(Sqm, PbSm)
 
 
-# In[6]:
+# In[7]:
 
 
 Tab2 = {
@@ -85,7 +87,7 @@ Tab2 = {
 Tab = pd.DataFrame(Tab2)
 
 
-# In[7]:
+# In[8]:
 
 
 fig, ax = plt.subplots(figsize=(15, 13))
@@ -103,14 +105,14 @@ plt.show()
 plt.savefig("таблица корреляций для гипотезы 2.svg")
 
 
-# In[10]:
+# In[9]:
 
 
 Based = Base.copy()
 Based['Цена за квадрат'] = hampel(Base['Цена за квадрат'])
 
 
-# In[11]:
+# In[14]:
 
 
 #Распределенеи цены за квадрат
@@ -120,14 +122,11 @@ axs = fig.add_subplot(121)
 n_bins1 = 10
 X = Based['Цена за квадрат']
 
-axs.hist(X, bins=n_bins1)
-axs.set_title('Распределенеи цены\n за квадрат')
-
-sns.histplot(X, kde=True, color='red')
+sns.histplot(X, kde=True)
 plt.savefig("Распределенеи цены за квадрат.svg")
 
 
-# In[12]:
+# In[16]:
 
 
 Basedd = Base.copy()
@@ -135,7 +134,7 @@ Basedd['Цена за квадрат'] = hampel(Base['Цена за квадра
 Basedd['площадь'] = hampel(Base['площадь'])
 
 
-# In[13]:
+# In[17]:
 
 
 #Категорированная диаграмма Бокса-Уискера
@@ -154,7 +153,7 @@ plt.show()
 plt.savefig("Категорированная диаграмма Бокса-Уискера площадь и цена.svg")
 
 
-# In[14]:
+# In[18]:
 
 
 Sqf     = Base['площадь']
@@ -164,7 +163,7 @@ Kr = sp.kruskal(Sqf, PbSf)
 print(Kr)
 
 
-# In[15]:
+# In[19]:
 
 
 TabBox = {
@@ -178,7 +177,7 @@ TabBox = {
 Tab = pd.DataFrame(TabBox)
 
 
-# In[16]:
+# In[20]:
 
 
 fig, ax = plt.subplots(figsize=(15, 13))
@@ -196,7 +195,7 @@ plt.show()
 plt.savefig("таблица нулевой гипотезы для гипотезы 2.svg")
 
 
-# In[17]:
+# In[21]:
 
 
 #отбор данных для каждого района
@@ -207,7 +206,7 @@ DS4 = Base.loc[Base['район'] == 'р-н Зареченский']
 DS5 = Base.loc[Base['район'] == 'р-н Пролетарский']
 
 
-# In[18]:
+# In[22]:
 
 
 #оздание массивов с средней ценной и площадью квартир от района
@@ -218,7 +217,7 @@ PbSR = np.array([DS1['Цена за квадрат'].mean(), DS2['Цена за 
 I = np.array(['р-н Центральный', 'р-н Привокзальный', 'р-н Советский','Зареченский', 'Пролетарский',])
 
 
-# In[19]:
+# In[23]:
 
 
 #строим график
@@ -238,7 +237,7 @@ plt.subplots_adjust(wspace=0.5)
 plt.savefig("цена и площадь от района.svg")
 
 
-# In[21]:
+# In[24]:
 
 
 MegaBased = Base.copy()
@@ -246,7 +245,7 @@ MegaBased['площадь'] = hampel(MegaBased['площадь'])
 MegaBased['Цена за квадрат'] = hampel(MegaBased['Цена за квадрат'])
 
 
-# In[23]:
+# In[28]:
 
 
 #Диаграмма рассеивания для переменных цена за квартиру и площадь квартиры
@@ -255,7 +254,7 @@ fig, ax = plt.subplots()
 data = MegaBased['площадь']
 y = MegaBased['Цена за квадрат']
 
-ax.scatter(data, y, c = 'deeppink')    
+ax.scatter(data, y, c = 'darkblue')    
 
 ax.set_title('Диаграмма рассеивания для переменных цена за квартиру и площадь квартиры', fontsize=32)
 plt.xlabel('площадь', fontsize=32)
@@ -268,13 +267,13 @@ plt.show()
 plt.savefig("Диаграмма рассеивания для переменных цена за квартиру и площадь квартиры.svg")
 
 
-# In[209]:
+# In[29]:
 
 
 Basec = Base[Base['площадь'] < 5000]
 
 
-# In[210]:
+# In[30]:
 
 
 Sq     = Basec['площадь']
@@ -291,40 +290,39 @@ print(slr.coef_[0])
 print(slr.intercept_)
 
 
-# In[211]:
+# In[31]:
 
 
 print(Sq)
 
 
-# In[212]:
+# In[32]:
 
 
-import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-results = smf.ols('Sq ~ PbS', data=Basec).fit()
+results = smf.ols('PbS ~ Sq', data=Basec).fit()
 print(results.summary())
 
 
-# In[213]:
+# In[33]:
 
 
 TabStat = {
-    'переменная' : ['Sq', 'PbS'],
-    'Коэф.' : [results.params[0].round(3), results.params[1].round(3)],
-    'станд. ошибка' : [results.bse[0].round(3), results.bse[1].round(3)],
-    't-статистика' : [results.tvalues[0].round(3), results.tvalues[1].round(3)],
-    'p-уровень' : [results.pvalues[0].round(3), results.pvalues[1].round(3)],
-    '95% дов интервал левый' : [results.conf_int()[0][0].round(3), results.conf_int()[0][1].round(3)],
-    '95% дов интервал правый' : [results.conf_int()[1][0].round(3), results.conf_int()[1][1].round(3)]
+    'переменная' : ['Sq'],
+    'Коэф.' : [results.params[1].round(3)],
+    'станд. ошибка' : [results.bse[1].round(3)],
+    't-статистика' : [results.tvalues[1].round(3)],
+    'p-уровень' : [results.pvalues[1].round(3)],
+    '95% дов интервал левый' : [results.conf_int()[0][1].round(3)],
+    '95% дов интервал правый' : [results.conf_int()[1][1].round(3)]
 }
 
 TabStat = pd.DataFrame(TabStat)
 print(TabStat)
 
 
-# In[214]:
+# In[34]:
 
 
 fig, ax = plt.subplots(figsize=(15, 13))
@@ -341,13 +339,35 @@ fig.tight_layout()
 plt.show()
 
 
-# In[ ]:
+# In[35]:
 
 
+white_test = het_white(results.resid,  results.model.exog)
+
+labels = ['Тестовая статистика', 'тестовая значиость', 'F-статистика', 'F-тест значимость']
+
+TabWhigt = dict(zip(labels, white_test))
+TabWhigt = pd.DataFrame(TabWhigt, index=[0])
 
 
+# In[36]:
 
-# In[215]:
+
+fig, ax = plt.subplots(figsize=(15, 13))
+
+# hide axes
+fig.patch.set_visible(False)
+ax.axis('off')
+ax.axis('tight')
+
+ax.table(cellText=TabWhigt.values, colLabels=TabWhigt.columns, loc='center')
+
+fig.tight_layout()
+
+plt.show()
+
+
+# In[37]:
 
 
 #проверка качества модели
@@ -356,13 +376,13 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.3, random_state=0)
 
 
-# In[216]:
+# In[38]:
 
 
 slr = LinearRegression()
 
 
-# In[217]:
+# In[39]:
 
 
 slr.fit(X_train, y_train)
@@ -370,7 +390,7 @@ y_train_pred = slr.predict(X_train)
 y_test_pred = slr.predict(X_test)
 
 
-# In[218]:
+# In[40]:
 
 
 print('MSE train: {:.3f}, test: {:.3f}'.format(
@@ -381,7 +401,7 @@ print('R^2 train: {:.3f}, test: {:.3f}'.format(
         r2_score(y_test, y_test_pred)))
 
 
-# In[222]:
+# In[41]:
 
 
 plt.scatter(y_train_pred,  y_train_pred - y_train,
@@ -396,7 +416,7 @@ plt.hlines(y=0, xmin=65000, xmax=100000, lw=2, color='red')
 plt.tight_layout()
 
 
-# In[223]:
+# In[42]:
 
 
 sc_x = StandardScaler()
@@ -409,13 +429,13 @@ X_train_scaled, X_test_scaled, y_train_scaled, y_test_scaled = train_test_split(
     X_std, y_std, test_size=0.3, random_state=0)
 
 
-# In[224]:
+# In[43]:
 
 
 X_train_scaled.std(), X_train_scaled.mean()
 
 
-# In[225]:
+# In[49]:
 
 
 en = ElasticNet(alpha=0.1, l1_ratio=0.5)
@@ -432,7 +452,7 @@ print('R^2 train: {:.3f}, test: {:.3f}'.format(
         r2_score(y_test_scaled, y_test_pred)))
 
 
-# In[226]:
+# In[50]:
 
 
 regr = LinearRegression()
@@ -443,7 +463,7 @@ X_quad = quadratic.fit_transform(Sq.to_numpy().reshape(-1, 1))
 X_cubic = cubic.fit_transform(Sq.to_numpy().reshape(-1, 1))
 
 
-# In[227]:
+# In[51]:
 
 
 X_fit = np.arange(Sq.to_numpy().min(), Sq.to_numpy().max(), 1)[:, np.newaxis]
@@ -453,7 +473,7 @@ y_lin_fit = regr.predict(X_fit)
 linear_r2 = r2_score(PbS.to_numpy().reshape(-1, 1), regr.predict(Sq.to_numpy().reshape(-1, 1)))
 
 
-# In[228]:
+# In[52]:
 
 
 regr = regr.fit(X_quad, PbS.to_numpy())
@@ -461,7 +481,7 @@ y_quad_fit = regr.predict(quadratic.fit_transform(X_fit))
 quadratic_r2 = r2_score(PbS.to_numpy(), regr.predict(X_quad))
 
 
-# In[229]:
+# In[53]:
 
 
 regr = regr.fit(X_cubic, PbS.to_numpy())
@@ -469,37 +489,19 @@ y_cubic_fit = regr.predict(cubic.fit_transform(X_fit))
 cubic_r2 = r2_score(PbS.to_numpy().reshape(-1, 1), regr.predict(X_cubic))
 
 
-# In[230]:
+# In[55]:
 
 
 # отображение результатов
-plt.scatter(Sq, PbS, label='training points', color='lightgray')
+plt.scatter(Sq, PbS, label='training points', color='lightblue')
 
 plt.plot(X_fit, y_lin_fit, 
          label='линейный (d=1), $R^2={:.2f}$'.format(linear_r2), 
          color='blue', 
          lw=2, 
-         linestyle=':')
-
-plt.plot(X_fit, y_quad_fit, 
-         label='квадратичный (d=2), $R^2={:.2f}$'.format(quadratic_r2),
-         color='red', 
-         lw=2,
          linestyle='-')
-
-plt.plot(X_fit, y_cubic_fit, 
-         label='кубический (d=3), $R^2={:.2f}$'.format(cubic_r2),
-         color='green', 
-         lw=2, 
-         linestyle='--')
 
 plt.xlabel('Этаж')
 plt.ylabel('Цена за квадрат')
 plt.legend(loc='upper right')
-
-
-# In[ ]:
-
-
-
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[112]:
+# In[1]:
 
 
 #Импорт библиотек
@@ -19,9 +19,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, median_absolute_error, r2_score
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import ElasticNet
+from statsmodels.stats.diagnostic import het_white
+import statsmodels.api as sm
 
 
-# In[4]:
+# In[2]:
 
 
 #Импорт БД
@@ -30,7 +32,7 @@ Base = pd.read_csv('C:/Users/Dima/Desktop/АНДАН - workable data (1).csv', d
                         'кол-во комнат', 'тип дома', 'этажность', 'этаж', 'срок сдачи'])
 
 
-# In[5]:
+# In[3]:
 
 
 # Функция очистки от выбросов
@@ -44,7 +46,7 @@ def hampel(vals_orig):
     return(vals)
 
 
-# In[24]:
+# In[4]:
 
 
 # Необходимые переменные
@@ -56,7 +58,7 @@ StageH = hampel(Base['этажность'])
 StageF = hampel(Base['этаж'])
 
 
-# In[31]:
+# In[5]:
 
 
 #Гипотеза 1:
@@ -78,7 +80,7 @@ temp1 = np.where(np.isnan(temp1), 0., temp1)
 temp2 = np.where(np.isnan(temp2), 0., temp2)
 
 
-# In[32]:
+# In[6]:
 
 
 #гистаграмма корреляций по этажности
@@ -89,12 +91,12 @@ n_bins1 = len(temp1)
 
 axs.set_title('Тау Кендала')
 
-sns.histplot(temp1, kde=True, color='orange')
+sns.histplot(temp1, kde=True, color='blue')
 
 plt.savefig("гистаграмма корреляций по этажности Тау Кендала.svg")
 
 
-# In[33]:
+# In[7]:
 
 
 fig = plt.figure(figsize=(8, 6))
@@ -104,12 +106,12 @@ n_bins2 = len(temp2)
 
 axs.set_title('Корреляция\n Спирмена')
 
-sns.histplot(temp2, kde=True, color='orange')
+sns.histplot(temp2, kde=True, color='blue')
 #fig = sns_plot.get_figure()
 plt.savefig("гистаграмма корреляций по этажности Корреляция Спирмена.svg")
 
 
-# In[34]:
+# In[8]:
 
 
 # создание копии БД
@@ -117,7 +119,7 @@ Based = Base.copy()
 Based['Цена за квадрат'] = hampel(Based['Цена за квадрат'])
 
 
-# In[35]:
+# In[9]:
 
 
 #Категорированная диаграмма Бокса-Уискера
@@ -135,7 +137,7 @@ plt.show()
 plt.savefig("Категорированная диаграмма Бокса-Уискера для этажа и цены за квадрат.svg")
 
 
-# In[36]:
+# In[10]:
 
 
 PbSd    = Base['Цена за квадрат']
@@ -145,7 +147,7 @@ Kr = sp.kruskal(StageFd, PbSd)
 print(Kr)
 
 
-# In[37]:
+# In[11]:
 
 
 TabBox = {
@@ -159,7 +161,7 @@ TabBox = {
 Tab = pd.DataFrame(TabBox)
 
 
-# In[38]:
+# In[12]:
 
 
 fig, ax = plt.subplots(figsize=(15, 13))
@@ -177,7 +179,7 @@ plt.show()
 plt.savefig("таблица нулевой гипотезы для гипотезы 1.svg")
 
 
-# In[41]:
+# In[13]:
 
 
 #Диаграмма рассеивания для переменных цена за квартиру и площадь квартиры
@@ -186,7 +188,7 @@ StageFa = hampel(Base['этаж'])
 
 fig, ax = plt.subplots()
 
-ax.scatter(StageFa, PbSa, c = 'deeppink')    
+ax.scatter(StageFa, PbSa, c = 'darkblue')    
 
 ax.set_title('Диаграмма рассеивания для переменных цена за квартиру и этажа', fontsize=32)
 plt.xlabel('этаж', fontsize=32)
@@ -199,7 +201,7 @@ plt.show()
 plt.savefig("Диаграмма рассеивания для переменных цена за квартиру и этажа.svg")
 
 
-# In[67]:
+# In[15]:
 
 
 PbSq    = Base['Цена за квадрат']
@@ -215,40 +217,33 @@ print(slr.coef_[0])
 print(slr.intercept_)
 
 
-# In[141]:
+# In[16]:
 
 
-import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-results = smf.ols('StageFq ~ PbSq', data=Base).fit()
+results = smf.ols('PbSq ~ StageFq', data=Base).fit()
 print(results.summary())
 
 
-# In[190]:
-
-
-results.conf_int()[0]
-
-
-# In[195]:
+# In[19]:
 
 
 TabStat = {
-    'переменная' : ['StageFq', 'PbS'],
-    'Коэф.' : [results.params[0].round(3), results.params[1].round(3)],
-    'станд. ошибка' : [results.bse[0].round(3), results.bse[1].round(3)],
-    't-статистика' : [results.tvalues[0].round(3), results.tvalues[1].round(3)],
-    'p-уровень' : [results.pvalues[0].round(3), results.pvalues[1].round(3)],
-    '95% дов интервал левый' : [results.conf_int()[0][0].round(3), results.conf_int()[0][1].round(3)],
-    '95% дов интервал правый' : [results.conf_int()[1][0].round(3), results.conf_int()[1][1].round(3)]
+    'переменная' : ['StageFq'],
+    'Коэф.' : [results.params[1].round(3)],
+    'станд. ошибка' : [results.bse[1].round(3)],
+    't-статистика' : [results.tvalues[1].round(3)],
+    'p-уровень' : [results.pvalues[1].round(3)],
+    '95% дов интервал левый' : [results.conf_int()[0][1].round(3)],
+    '95% дов интервал правый' : [results.conf_int()[1][1].round(3)]
 }
 
 TabStat = pd.DataFrame(TabStat)
 print(TabStat)
 
 
-# In[197]:
+# In[20]:
 
 
 fig, ax = plt.subplots(figsize=(15, 13))
@@ -265,7 +260,35 @@ fig.tight_layout()
 plt.show()
 
 
-# In[74]:
+# In[21]:
+
+
+white_test = het_white(results.resid,  results.model.exog)
+
+labels = ['Тестовая статистика', 'тестовая значиость', 'F-статистика', 'F-тест значимость']
+
+TabWhigt = dict(zip(labels, white_test))
+TabWhigt = pd.DataFrame(TabWhigt, index=[0])
+
+
+# In[22]:
+
+
+fig, ax = plt.subplots(figsize=(15, 13))
+
+# hide axes
+fig.patch.set_visible(False)
+ax.axis('off')
+ax.axis('tight')
+
+ax.table(cellText=TabWhigt.values, colLabels=TabWhigt.columns, loc='center')
+
+fig.tight_layout()
+
+plt.show()
+
+
+# In[23]:
 
 
 #проверка качества модели
@@ -274,13 +297,13 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.3, random_state=0)
 
 
-# In[75]:
+# In[24]:
 
 
 slr = LinearRegression()
 
 
-# In[76]:
+# In[25]:
 
 
 slr.fit(X_train, y_train)
@@ -288,7 +311,7 @@ y_train_pred = slr.predict(X_train)
 y_test_pred = slr.predict(X_test)
 
 
-# In[78]:
+# In[26]:
 
 
 print('MSE train: {:.3f}, test: {:.3f}'.format(
@@ -299,7 +322,7 @@ print('R^2 train: {:.3f}, test: {:.3f}'.format(
         r2_score(y_test, y_test_pred)))
 
 
-# In[98]:
+# In[27]:
 
 
 plt.scatter(y_train_pred,  y_train_pred - y_train,
@@ -314,7 +337,7 @@ plt.hlines(y=0, xmin=85000, xmax=102000, lw=2, color='red')
 plt.tight_layout()
 
 
-# In[113]:
+# In[28]:
 
 
 sc_x = StandardScaler()
@@ -322,20 +345,18 @@ sc_y = StandardScaler()
 X_std = sc_x.fit_transform(StageFq.to_numpy().reshape(-1, 1))
 y_std = sc_y.fit_transform(PbSq.to_numpy().reshape(-1, 1)).flatten()
 # newaxis увеличивает размерность массива, flatten — наооборот
-# https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html#numpy.newaxis
-# https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.ndarray.flatten.html
 
 X_train_scaled, X_test_scaled, y_train_scaled, y_test_scaled = train_test_split(
     X_std, y_std, test_size=0.3, random_state=0)
 
 
-# In[114]:
+# In[29]:
 
 
 X_train_scaled.std(), X_train_scaled.mean()
 
 
-# In[115]:
+# In[30]:
 
 
 en = ElasticNet(alpha=0.1, l1_ratio=0.5)
@@ -352,7 +373,7 @@ print('R^2 train: {:.3f}, test: {:.3f}'.format(
         r2_score(y_test_scaled, y_test_pred)))
 
 
-# In[125]:
+# In[31]:
 
 
 regr = LinearRegression()
@@ -363,7 +384,7 @@ X_quad = quadratic.fit_transform(StageFq.to_numpy().reshape(-1, 1))
 X_cubic = cubic.fit_transform(StageFq.to_numpy().reshape(-1, 1))
 
 
-# In[126]:
+# In[32]:
 
 
 X_fit = np.arange(StageFq.to_numpy().min(), StageFq.to_numpy().max(), 1)[:, np.newaxis]
@@ -373,7 +394,7 @@ y_lin_fit = regr.predict(X_fit)
 linear_r2 = r2_score(PbSq.to_numpy().reshape(-1, 1), regr.predict(StageFq.to_numpy().reshape(-1, 1)))
 
 
-# In[127]:
+# In[33]:
 
 
 regr = regr.fit(X_quad, PbSq.to_numpy())
@@ -381,7 +402,7 @@ y_quad_fit = regr.predict(quadratic.fit_transform(X_fit))
 quadratic_r2 = r2_score(PbSq.to_numpy(), regr.predict(X_quad))
 
 
-# In[128]:
+# In[34]:
 
 
 regr = regr.fit(X_cubic, PbSq.to_numpy())
@@ -389,37 +410,19 @@ y_cubic_fit = regr.predict(cubic.fit_transform(X_fit))
 cubic_r2 = r2_score(PbSq.to_numpy().reshape(-1, 1), regr.predict(X_cubic))
 
 
-# In[131]:
+# In[36]:
 
 
 # отображение результатов
-plt.scatter(StageFq, PbSq, label='training points', color='lightgray')
+plt.scatter(StageFq, PbSq, label='training points', color='lightblue')
 
 plt.plot(X_fit, y_lin_fit, 
          label='линейный (d=1), $R^2={:.2f}$'.format(linear_r2), 
          color='blue', 
          lw=2, 
-         linestyle=':')
-
-plt.plot(X_fit, y_quad_fit, 
-         label='квадратичный (d=2), $R^2={:.2f}$'.format(quadratic_r2),
-         color='red', 
-         lw=2,
          linestyle='-')
-
-plt.plot(X_fit, y_cubic_fit, 
-         label='кубический (d=3), $R^2={:.2f}$'.format(cubic_r2),
-         color='green', 
-         lw=2, 
-         linestyle='--')
 
 plt.xlabel('Этаж')
 plt.ylabel('Цена за квадрат')
 plt.legend(loc='upper right')
-
-
-# In[ ]:
-
-
-
 
